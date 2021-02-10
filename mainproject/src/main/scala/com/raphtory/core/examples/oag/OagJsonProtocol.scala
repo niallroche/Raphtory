@@ -234,6 +234,12 @@ object OAGJsonProtocol extends DefaultJsonProtocol {
         case None => None
       }
 
+    def getDouble(field: String)(implicit jsObj: JsObject): Option[Double] =
+      getField(field) match {
+        case Some(s) => Some(s.toDouble)
+        case None => None
+      }
+
     def write(p: OAGPaper) = JsString("TODO")
 
     def read(value: JsValue) = {
@@ -280,11 +286,33 @@ object OAGJsonProtocol extends DefaultJsonProtocol {
               getExtendedReferences("ExtendedRId"),
 //              getCitations("CitCon")
 //              new Option(new List[String])
-              getBoolean("isSeed"),
+//              getBoolean("isSeed"),
+              getField("s3_key") match {
+                case Some(s) => Some(s.contains("/seed_papers/"))
+                case None    => None
+              },
               getField("label_density") match {
                 case Some(s) => Some(s.toDouble)
                 case None    => None
               },
+              getField("s3_key") match {
+                case Some(s) => Some(s)
+                case None    => None
+              },
+              getDouble("num_blockchain_name"),
+              getDouble("num_chargingandrewardingsystem"),
+              getDouble("num_codebase"),
+              getDouble("num_consensus"),
+              getDouble("num_esg"),
+              getDouble("num_extensibility"),
+              getDouble("num_identifiers"),
+              getDouble("num_identity_management"),
+              getDouble("num_labelled_token"),
+              getDouble("num_misc"),
+              getDouble("num_native_currency_tokenisation"),
+              getDouble("num_security_privacy"),
+              getDouble("num_token"),
+              getDouble("num_transaction_capabilities"),
             )
     }
   }

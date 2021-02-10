@@ -22,7 +22,8 @@ class OAGGraphBuilder extends GraphBuilder[String] {
 
 //  var threshold = 2.2
   var filteringOnThreshold = System.getenv().getOrDefault("FILTERING_ON_THRESHOLD", "false").trim.toBoolean
-  var threshold = System.getenv().getOrDefault("THRESHOLD", "2.15").trim.toDouble
+//  var threshold = System.getenv().getOrDefault("THRESHOLD", "2.15").trim.toDouble
+  var threshold = System.getenv().getOrDefault("THRESHOLD", ".0215").trim.toDouble
 
   private val processCitations = System.getenv().getOrDefault("PROCESS_CITATIONS", "false").trim.toBoolean
 
@@ -52,9 +53,17 @@ class OAGGraphBuilder extends GraphBuilder[String] {
 
       if (inputType == 0) { //sematic
         val doc = command.parseJson.convertTo[OpenAcademic]
+        if (doc.s3_key != None) {
+          println("s3_key" + doc.s3_key)
+          println("doc.isSeed" +doc.isSeed)
+        }
         sendDocumentToPartitions(doc, commands)
       } else if (inputType == 1) { //MAG
         val oagdoc = command.parseJson.convertTo[OAGPaper]
+        if (oagdoc.s3_key != None) {
+          println("s3_key" + oagdoc.s3_key)
+          println("doc.isSeed" +oagdoc.isSeed)
+        }
         val doc = convertToOpenAcademic(oagdoc)
         sendDocumentToPartitions(doc, commands)
       } else {
@@ -67,6 +76,12 @@ class OAGGraphBuilder extends GraphBuilder[String] {
 
   def resolveInputFormat(inputstr: String): Int = {
 
+    if (inputstr.contains("num_blockchain_name")) {
+      println("newdata")
+      if (!inputstr.contains("num_blockchain_name\": -1,")) {
+        println("newdata with value")
+      }
+    }
 
     if (inputstr.contains("168635309") && inputstr.contains("352507459")) {
       println("found paper")
@@ -105,7 +120,36 @@ class OAGGraphBuilder extends GraphBuilder[String] {
         None,
         None,
         None,
-        None
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        /*reference.num_blockchain_name,
+        reference.num_chargingandrewardingsystem,
+        reference.num_codebase"),
+        reference.num_consensus"),
+        reference.num_esg"),
+        reference.num_extensibility"),
+        reference.num_identifiers"),
+        reference.num_identity_management"),
+        reference.num_labelled_token"),
+        reference.num_misc"),
+        reference.num_native_currency_tokenisation"),
+        reference.num_security_privacy"),
+        reference.num_token"),
+        reference.num_transaction_capabilities"),*/
       )
       references+=openformat
     }
@@ -121,18 +165,28 @@ class OAGGraphBuilder extends GraphBuilder[String] {
       Some(references.toList),
       citations,
       paper.isSeed,
-      paper.labelDensity
+      paper.labelDensity,
+      paper.s3_key,
+      paper.num_blockchain_name,
+      paper.num_chargingandrewardingsystem,
+      paper.num_codebase,
+      paper.num_consensus,
+      paper.num_esg,
+      paper.num_extensibility,
+      paper.num_identifiers,
+      paper.num_identity_management,
+      paper.num_labelled_token,
+      paper.num_misc,
+      paper.num_native_currency_tokenisation,
+      paper.num_security_privacy,
+      paper.num_token,
+      paper.num_transaction_capabilities
     )
   }
 
   def sendDocumentToPartitions(document: OpenAcademic, commands: ParHashSet[GraphUpdate]): Unit = {
-    if (filteringOnThreshold)  {
-      val density = document.labelDensity
-      if(density isDefined)
-        if(document.labelDensity.get.doubleValue() != -1)
-          if(document.labelDensity.get.doubleValue < threshold.doubleValue || document.labelDensity.get.doubleValue > 100)
-            return //do not proceed with adding this node
-    }
+//    if (checkThreshold(document)) return
+    if (checkThreshold(document) && (document.isSeed == None || document.isSeed.get.booleanValue() == false)) return
     //    var timestamp = dateToUnixTime(document.date.get.toString)
     //    var timestamp = dateToEarlierEpoch(document.date.get.toString)
     var timestamp = dateToEarlierEpoch(document.year.get.toString)
@@ -174,9 +228,26 @@ class OAGGraphBuilder extends GraphBuilder[String] {
             LongProperty("isSeed", 0),
           //LongProperty("isSeed", 1)//hardocding seed for the moment
           if (document.labelDensity != None)
-            DoubleProperty("labelDensity", document.labelDensity.get)
+            DoubleProperty("label_density", document.labelDensity.get)
           else
-            DoubleProperty("labelDensity", 0),
+            DoubleProperty("no_label_density", 1),
+//            null,
+          LongProperty("loadedDirectly", 1),
+
+          ImmutableProperty("s3_key",if (document.s3_key == None) "None" else document.s3_key.get),
+          DoubleProperty("num_blockchain_name",if (document.num_blockchain_name == None) -1 else document.num_blockchain_name.get),
+          DoubleProperty("num_chargingandrewardingsystem",if (document.num_chargingandrewardingsystem == None) -1 else document.num_chargingandrewardingsystem.get),
+          DoubleProperty("num_codebase",if (document.num_codebase == None) -1 else document.num_codebase.get),
+          DoubleProperty("num_esg",if (document.num_esg == None) -1 else document.num_esg.get),
+          DoubleProperty("num_extensibility",if (document.num_extensibility == None) -1 else document.num_extensibility.get),
+          DoubleProperty("num_identifiers",if (document.num_identifiers == None) -1 else document.num_identifiers.get),
+          DoubleProperty("num_identity_management",if (document.num_identity_management == None) -1 else document.num_identity_management.get),
+          DoubleProperty("num_labelled_token",if (document.num_labelled_token == None) -1 else document.num_labelled_token.get),
+          DoubleProperty("num_misc",if (document.num_misc == None) -1 else document.num_misc.get),
+          DoubleProperty("num_native_currency_tokenisation",if (document.num_native_currency_tokenisation == None) -1 else document.num_native_currency_tokenisation.get),
+          DoubleProperty("num_security_privacy",if (document.num_security_privacy == None) -1 else document.num_security_privacy.get),
+          DoubleProperty("num_token",if (document.num_token == None) -1 else document.num_token.get),
+          DoubleProperty("num_transaction_capabilities",if (document.num_transaction_capabilities == None) -1 else document.num_transaction_capabilities.get),
         ),
         Type("Paper"),
       )
@@ -210,6 +281,29 @@ class OAGGraphBuilder extends GraphBuilder[String] {
 //    commands
   }
 
+  private def checkThreshold(document: OpenAcademic): Boolean = {
+    if (filteringOnThreshold) {
+      val density = document.labelDensity
+      if (density isDefined) {
+        if (document.labelDensity.get.doubleValue() == 0)
+          println("0")
+        if (document.labelDensity.get.doubleValue() != -1) {
+          if (document.labelDensity.get.doubleValue < threshold.doubleValue || document.labelDensity.get.doubleValue > 100)
+            return true //do not proceed with adding this node
+          else
+            println("over")
+        } else {
+          println("-1")
+          return true
+        }
+      } else {
+        println("not defined")
+        return true
+      }
+    }
+    false
+  }
+
   private def handleReferences(references: List[OpenAcademic], commands: ParHashSet[GraphUpdate], timestamp: Long, annotationUUID: Long, outbound: Boolean) = {
     for (reference <- references) {
       //        val refUUID = mapId(reference)
@@ -224,8 +318,15 @@ class OAGGraphBuilder extends GraphBuilder[String] {
         print("-----found Tragedy of the Commons paper")
       }
 
+      var addToGraph = false //default to just adding edge as the data will be loaded in later/already
+      /*var addToGraph = true
+      if (reference.year == None)
+        addToGraph = false
+      if(checkThreshold(reference))
+        addToGraph = false*/
 
-      if (reference.year != None) sendUpdate(
+
+      if (addToGraph) sendUpdate(
         VertexAddWithProperties(
           dateToEarlierEpoch(reference.year.get.toString),
           refUUID,
@@ -242,8 +343,14 @@ class OAGGraphBuilder extends GraphBuilder[String] {
               LongProperty("isSeed", 1)
             else
               LongProperty("isSeed", 0),
+//            DoubleProperty("labelDensity", reference.labelDensity.get),
             //            LongProperty("isSeed", 0),
-            if (reference.labelDensity != None) {
+            LongProperty("loadedViaReference", 1),
+            if (reference.labelDensity != None)
+              DoubleProperty("label_density", reference.labelDensity.get)
+            else
+              DoubleProperty("no_label_density", 1)
+            /*if (reference.labelDensity != None) {
               val label_density = reference.labelDensity.get
               if (label_density > threshold)
                 DoubleProperty("labelDensity", reference.labelDensity.get)
@@ -252,7 +359,9 @@ class OAGGraphBuilder extends GraphBuilder[String] {
                 null
               }
             } else
-              DoubleProperty("labelDensity", 0)
+//              DoubleProperty("labelDensity", 0)
+              null*/
+
           ),
           Type("Paper"),
         )
