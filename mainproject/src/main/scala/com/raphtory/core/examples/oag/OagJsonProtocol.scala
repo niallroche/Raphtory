@@ -291,6 +291,22 @@ object OAGJsonProtocol extends DefaultJsonProtocol {
                 case Some(s) => Some(s.contains("/seed_papers/"))
                 case None    => None
               },
+              getField("s3_key") match {
+                case Some(s) => Some(s.contains("/first_layer/"))
+                case None    => None
+              },
+              getField("s3_key") match {
+                case Some(s) => Some(s.contains("/second_layer/"))
+                case None    => None
+              },
+              getField("s3_key") match {
+                case Some(s) => Some(s.contains("/semanticscholar_label_density/"))
+                case None    => None
+              },
+              getField("s3_key") match {
+                case Some(s) => Some(s.contains("/mag_label_density/"))
+                case None    => None
+              },
               getField("label_density") match {
                 case Some(s) => Some(s.toDouble)
                 case None    => None

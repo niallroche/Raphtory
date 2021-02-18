@@ -136,6 +136,10 @@ class OAGGraphBuilder extends GraphBuilder[String] {
         None,
         None,
         None,
+        None,
+        None,
+        None,
+        None,
         /*reference.num_blockchain_name,
         reference.num_chargingandrewardingsystem,
         reference.num_codebase"),
@@ -165,6 +169,10 @@ class OAGGraphBuilder extends GraphBuilder[String] {
       Some(references.toList),
       citations,
       paper.isSeed,
+      paper.isFirst,
+      paper.isSecond,
+      paper.isSemantic,
+      paper.isMag,
       paper.labelDensity,
       paper.s3_key,
       paper.num_blockchain_name,
@@ -185,6 +193,10 @@ class OAGGraphBuilder extends GraphBuilder[String] {
   }
 
   def sendDocumentToPartitions(document: OpenAcademic, commands: ParHashSet[GraphUpdate]): Unit = {
+    val refUUID = assignPaperID(document.title.get)
+    if (refUUID == -7945304) {
+      println("here")
+    }
 //    if (checkThreshold(document)) return
     if (checkThreshold(document) && (document.isSeed == None || document.isSeed.get.booleanValue() == false)) return
     //    var timestamp = dateToUnixTime(document.date.get.toString)
@@ -226,6 +238,22 @@ class OAGGraphBuilder extends GraphBuilder[String] {
             LongProperty("isSeed", 1)
           else
             LongProperty("isSeed", 0),
+          if (document.isFirst != None && document.isFirst.get)
+            LongProperty("isFirst", 1)
+          else
+            LongProperty("isFirst", 0),
+          if (document.isSecond != None && document.isSecond.get)
+            LongProperty("isSecond", 1)
+          else
+            LongProperty("isSecond", 0),
+          if (document.isSemantic != None && document.isSemantic.get)
+            LongProperty("isSemantic", 1)
+          else
+            LongProperty("isSemantic", 0),
+          if (document.isMag != None && document.isMag.get)
+            LongProperty("isMag", 1)
+          else
+            LongProperty("isMag", 0),
           //LongProperty("isSeed", 1)//hardocding seed for the moment
           if (document.labelDensity != None)
             DoubleProperty("label_density", document.labelDensity.get)

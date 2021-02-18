@@ -72,7 +72,10 @@ case class OAGPaper(
   references: Option[List[Long]],
   extendedReferences: Option[List[MAGReference]],
   isSeed: Option[Boolean],
-
+  isFirst: Option[Boolean],
+  isSecond: Option[Boolean],
+  isSemantic: Option[Boolean],
+  isMag: Option[Boolean],
   labelDensity: Option[Double],
   s3_key: Option[String],
   num_blockchain_name: Option[Double],
